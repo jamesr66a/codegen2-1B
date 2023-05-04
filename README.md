@@ -8,7 +8,7 @@ license: apache-2.0
 
 [CodeGen2](https://github.com/salesforce/CodeGen2) is a family of autoregressive language models for **program synthesis**, introduced in the paper:
 
-[CodeGen2: Lessons for Training LLMs on Programming and Natural Languages]() by Erik Nijkamp\*, Hiroaki Hayashi\*, Caiming Xiong, Silvio Savarese, Yingbo Zhou.
+[CodeGen2: Lessons for Training LLMs on Programming and Natural Languages](https://arxiv.org/abs/2305.02309) by Erik Nijkamp\*, Hiroaki Hayashi\*, Caiming Xiong, Silvio Savarese, Yingbo Zhou.
 
 Unlike the original CodeGen model family (i.e., CodeGen1), CodeGen2 is capable of infilling, and supports more programming languages.
 
@@ -76,7 +76,7 @@ You might want to truncate the model output with `<eom>`.
 
 ## Training data
 
-This checkpoint is trained on the stricter permissive subset of [the deduplicated version of the Stack dataset (v1.1)](). Supported languages (and frameworks) are as follows:
+This checkpoint is trained on the stricter permissive subset of [the deduplicated version of the Stack dataset (v1.1)](https://huggingface.co/datasets/bigcode/the-stack-dedup). Supported languages (and frameworks) are as follows:
 `c`, `c++`, `c-sharp`, `dart`, `go`, `java`, `javascript`, `kotlin`, `lua`, `php`, `python`, `ruby`, `rust`, `scala`, `shell`, `sql`, `swift`, `typescript`, `vue`.
 
 ## Training procedure
@@ -87,7 +87,7 @@ Please refer to the paper for more details.
 
 ## Evaluation results
 
-We evaluate our models on HumanEval and HumanEval-Infill. Please refer to the [paper]() for more details.
+We evaluate our models on HumanEval and HumanEval-Infill. Please refer to the [paper](https://arxiv.org/abs/2305.02309) for more details.
 
 ## Intended use and limitations
 
@@ -102,6 +102,6 @@ However, the model is intended for and best at **program synthesis**, that is, g
   title={CodeGen2: Lessons for Training LLMs on Programming and Natural Languages},
   author={Nijkamp, Erik and Hayashi, Hiroaki and Xiong, Caiming and Savarese, Silvio and Zhou, Yingbo},
   journal={arXiv preprint},
-  year={2022}
+  year={2023}
 }
 ```
