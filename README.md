@@ -57,7 +57,7 @@ The final snippet looks as follows:
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
 tokenizer = AutoTokenizer.from_pretrained("Salesforce/codegen2-1B")
-model = AutoModelForCausalLM.from_pretrained("Salesforce/codegen2-1B")
+model = AutoModelForCausalLM.from_pretrained("Salesforce/codegen2-1B", trust_remote_code=True, revision="main")
 
 
 def format(prefix, suffix):
