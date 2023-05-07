@@ -51,6 +51,7 @@ CODEGEN_PRETRAINED_MODEL_ARCHIVE_LIST = [
     # See all CodeGen models at https://huggingface.co/models?filter=codegen
 ]
 
+sinsusoid_inp_cache = None
 
 # Copied from transformers.models.gptj.modeling_gptj.fixed_pos_embedding
 def fixed_pos_embedding(x, seq_dim=1, seq_len=None):
@@ -58,10 +59,12 @@ def fixed_pos_embedding(x, seq_dim=1, seq_len=None):
     if seq_len is None:
         seq_len = x.shape[seq_dim]
     inv_freq = 1.0 / (10000 ** (torch.arange(0, dim, 2) / dim))
-    sinusoid_inp = (
-        torch.einsum("i , j -> i j", torch.arange(seq_len, dtype=torch.float), inv_freq).to(x.device).float()
-    )
-    return torch.sin(sinusoid_inp), torch.cos(sinusoid_inp)
+    global sinsusoid_inp_cache
+    if sinsusoid_inp_cache is None or sinsusoid_inp_cache.shape[0] < seq_len:
+        sinsusoid_inp_cache = (
+            torch.einsum("i , j -> i j", torch.arange(2 * seq_len, dtype=torch.float), inv_freq).to(x.device).float()
+        )
+    return torch.sin(sinsusoid_inp_cache[:seq_len]), torch.cos(sinsusoid_inp_cache[:seq_len])
 
 
 # Copied from transformers.models.gptj.modeling_gptj.rotate_every_two
@@ -122,6 +125,8 @@ class CodeGenAttention(nn.Module):
         if config.rotary_dim is not None:
             self.rotary_dim = config.rotary_dim
 
+        self.mask_value_for_dtype = {}
+
     def _split_heads(self, x, n_head, dim_head, mp_num):
         reshaped = x.reshape(x.shape[:-1] + (n_head // mp_num, dim_head))
         reshaped = reshaped.reshape(x.shape[:-2] + (-1,) + reshaped.shape[-1:])
@@ -160,10 +165,13 @@ class CodeGenAttention(nn.Module):
         attn_weights = torch.matmul(query, key.transpose(-1, -2))
 
         attn_weights = attn_weights / self.scale_attn
-        mask_value = torch.finfo(attn_weights.dtype).min
-        # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
-        # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
-        mask_value = torch.tensor(mask_value, dtype=attn_weights.dtype).to(attn_weights.device)
+        mask_value = self.mask_value_for_dtype.get(attn_weights.dtype, None)
+        if mask_value is None:
+            mask_value = torch.finfo(attn_weights.dtype).min
+            # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
+            # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
+            mask_value = torch.tensor(mask_value, dtype=attn_weights.dtype).to(attn_weights.device)
+            self.mask_value_for_dtype[attn_weights.dtype] = mask_value
         attn_weights = torch.where(causal_mask, attn_weights, mask_value)
 
         if attention_mask is not None:
